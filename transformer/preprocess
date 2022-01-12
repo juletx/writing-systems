@@ -5,7 +5,7 @@ set -euo pipefail
 # Fairseq expects six files:
 # Two train, two dev, two test, each distinguished by prefixes.
 # One file is the source and one is the target, distinguished by suffixes.
-readonly DATA=../../data
+readonly DATA=../data
 readonly DATABIN=data-bin
 
 tsv() {

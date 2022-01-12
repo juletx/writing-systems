@@ -48,7 +48,7 @@ test() {
         <(cat "${OUT}" | grep '^H-' | cut -f3) \
         > "${TSV}"
     # Applies the evaluation script to the TSV file.
-    ../../evaluation/./evaluate.py "${TSV}" > "${RES}" 2> /dev/null
+    ../evaluation/./evaluate.py "${TSV}" > "${RES}" 2> /dev/null
     # Cleans up intermediate files.
     rm -f "${OUT}"
 }
