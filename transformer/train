@@ -81,7 +81,7 @@ train() {
         --clip-norm="${CLIP_NORM}" \
         --batch-size="${BATCH}" \
         --max-update="${MAX_UPDATE}" \
-        --patience=50 \
+        --patience=20 \
         --no-epoch-checkpoints \
         --tensorboard-logdir="${TENSORBOARD}/${TASK}/${LANGUAGE}" \
         "$@"   # In case we need more configuration control.

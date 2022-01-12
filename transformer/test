@@ -24,10 +24,6 @@ test() {
     SET="test"
     CHECKPOINT="${CP}/checkpoint_best.pt"
     RES="${CP}/${SET}.res"
-    # Don't overwrite an existing prediction file.
-    if [[ -f "${RES}" ]]; then
-        continue
-    fi
     echo "Evaluating into ${RES}"
     OUT="${CP}/${SET}.out"
     TSV="${CP}/${SET}.tsv"
@@ -48,7 +44,7 @@ test() {
         <(cat "${OUT}" | grep '^H-' | cut -f3) \
         > "${TSV}"
     # Applies the evaluation script to the TSV file.
-    ../evaluation/./evaluate.py "${TSV}" > "${RES}" 2> /dev/null
+    python ../evaluation/evaluate.py "${TSV}" > "${RES}"
     # Cleans up intermediate files.
     rm -f "${OUT}"
 }
