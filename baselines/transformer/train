@@ -14,7 +14,6 @@ readonly WARMUP_INIT_LR=1e-7
 readonly WARMUP_UPDATES=1000
 readonly CLIP_NORM=1.
 readonly MAX_UPDATE=5000
-readonly SAVE_INTERVAL=5
 readonly ACTIVATION_FN=relu
 readonly DATABIN=data-bin
 readonly CKPTS=checkpoints
@@ -40,9 +39,6 @@ readonly DAH=4
 readonly BATCH=400
 # Dropout.
 readonly DROPOUT=.1
-
-# Prediction options.
-readonly BEAM=5
 
 train() {
     local -r CP="$1"; shift
@@ -91,53 +87,10 @@ train() {
         "$@"   # In case we need more configuration control.
 }
 
-evaluate() {
-    local -r CP="$1"; shift
-    local -r TASK="$1"; shift
-    if [ $TASK == "g2p" ]; then
-        INPUT="graphemes"
-        OUTPUT="phonemes"
-    else
-        INPUT="phonemes"
-        OUTPUT="graphemes"
-    fi
-    SET="test"
-    CHECKPOINT="${CP}/checkpoint_best.pt"
-    RES="${CP}/${SET}.res"
-    # Don't overwrite an existing prediction file.
-    if [[ -f "${RES}" ]]; then
-        continue
-    fi
-    echo "Evaluating into ${RES}"
-    OUT="${CP}/${SET}.out"
-    TSV="${CP}/${SET}.tsv"
-    # Makes raw predictions.
-    fairseq-generate \
-        "${DATABIN}/${TASK}/${LANGUAGE}" \
-        --source-lang="${LANGUAGE}.${INPUT}" \
-        --target-lang="${LANGUAGE}.${OUTPUT}" \
-        --path="${CHECKPOINT}" \
-        --seed="${SEED}" \
-        --gen-subset="${SET}" \
-        --beam="${BEAM}" \
-        --no-progress-bar \
-        > "${OUT}"
-    # Extracts the predictions into a TSV file.
-    paste \
-        <(cat "${OUT}" | grep '^T-' | cut -f2) \
-        <(cat "${OUT}" | grep '^H-' | cut -f3) \
-        > "${TSV}"
-    # Applies the evaluation script to the TSV file.
-    ../../evaluation/./evaluate.py "${TSV}" > "${RES}" 2> /dev/null
-    # Cleans up intermediate files.
-    rm -f "${OUT}"
-}
-
 main() {
     for TASK in g2p p2g; do
         for LANGUAGE in $(ls ${DATABIN}/${TASK}); do
             train "${CKPTS}/${TASK}/${LANGUAGE}" "${TASK}"
-            evaluate "${CKPTS}/${TASK}/${LANGUAGE}" "${TASK}"
         done
     done
 }
