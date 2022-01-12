@@ -6,41 +6,50 @@ set -euo pipefail
 # Two train, two dev, two test, each distinguished by prefixes.
 # One file is the source and one is the target, distinguished by suffixes.
 readonly DATA=../../data
+readonly DATABIN=data-bin
 
 tsv() {
-    for TASK in train dev test; do
-        for TSV in "${DATA}/${TASK}/"*"_${TASK}.tsv"; do
+    for SET in train dev test; do
+        for TSV in "${DATA}/"*"_${SET}.tsv"; do
             # Separates graphemes with spaces.
             cut -f1 "${TSV}" | \
                 sed 's/./& /g' \
-                > "${TASK}".$(basename ${TSV%_${TASK}.tsv}).graphemes
+                > "${SET}".$(basename ${TSV%_${SET}.tsv}).graphemes
             # Phonemes are already separated intelligently in WikiPron.
             cut -f2 "${TSV}" \
-                > "${TASK}.$(basename ${TSV%_${TASK}.tsv}).phonemes"
+                > "${SET}.$(basename ${TSV%_${SET}.tsv}).phonemes"
         done
     done
 }
 
 bin() {
-    # Here we leave out test data because it's not provided yet.
+    local -r TASK="$1"; shift
+    if [ $TASK == "g2p" ]; then
+        INPUT="graphemes"
+        OUTPUT="phonemes"
+    else
+        INPUT="phonemes"
+        OUTPUT="graphemes"
+    fi
     for DEVPATH in dev.*.graphemes; do  # e.g., dev.kor_phonetic.graphemes
         LANGUAGE="$(echo "${DEVPATH}" | cut -d'.' -f2)"
         fairseq-preprocess \
-            --source-lang="${LANGUAGE}.graphemes" \
-            --target-lang="${LANGUAGE}.phonemes" \
+            --source-lang="${LANGUAGE}.${INPUT}" \
+            --target-lang="${LANGUAGE}.${OUTPUT}" \
             --trainpref=train \
             --validpref=dev \
             --testpref=test \
             --tokenizer=space \
             --thresholdsrc=5 \
             --thresholdtgt=5 \
-            --destdir="data-bin/${LANGUAGE}"
+            --destdir="${DATABIN}/${TASK}/${LANGUAGE}"
     done
 }
 
 main() {
     tsv
-    bin
+    bin g2p
+    bin p2g
     rm *.{graph,phon}emes
 }
 
