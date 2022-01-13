@@ -14,6 +14,7 @@ readonly BEAM=5
 test() {
     local -r CP="$1"; shift
     local -r TASK="$1"; shift
+    local -r SET="$1"; shift
     if [ $TASK == "g2p" ]; then
         INPUT="graphemes"
         OUTPUT="phonemes"
@@ -21,7 +22,8 @@ test() {
         INPUT="phonemes"
         OUTPUT="graphemes"
     fi
-    SET="test"
+    # Fairseq insists on calling the dev-set "valid"; hack around this.
+    local -r FAIRSEQ_SET="${SET/dev/valid}"
     CHECKPOINT="${CP}/checkpoint_best.pt"
     RES="${CP}/${SET}.res"
     echo "Evaluating into ${RES}"
@@ -34,7 +36,7 @@ test() {
         --target-lang="${LANGUAGE}.${OUTPUT}" \
         --path="${CHECKPOINT}" \
         --seed="${SEED}" \
-        --gen-subset="${SET}" \
+        --gen-subset="${FAIRSEQ_SET}" \
         --beam="${BEAM}" \
         --no-progress-bar \
         > "${OUT}"
@@ -52,7 +54,9 @@ test() {
 main() {
     for TASK in g2p p2g; do
         for LANGUAGE in $(ls ${DATABIN}/${TASK}); do
-            test "${CKPTS}/${TASK}/${LANGUAGE}" "${TASK}"
+            for SET in train dev test; do
+                test "${CKPTS}/${TASK}/${LANGUAGE}" "${TASK}" "${SET}"
+            done
         done
     done
 }
