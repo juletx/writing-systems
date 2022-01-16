@@ -1,47 +1,50 @@
-Languages
-=========
+# Comparing Writing Systems with Multilingual Grapheme-to-Phoneme and Phoneme-to-Grapheme Conversion
 
-We initially provide data for 10 languages:
+## Data
 
-1.  Armenian (`arm`)
-2.  Bulgarian (`bul`)
-3.  French (`fre`)
-4.  Georgian (`geo`)
-5.  Hindi (`hin`)
-6.  Hungarian (`hun`)
-7.  Icelandic (`ice`)
-8.  Korean (`kor`)
-9.  Lithuanian (`lit`)
-10. Modern Greek (`gre`)
+SIGMORPHON 2021 Task 1 medium-resource data is used.
+This data was extracted from the English-language portion of
+[Wiktionary](https://en.wiktionary.org/) using
+[WikiPron](https://github.com/kylebgorman/wikipron) (Lee et al. 2020), then
+filtered and downsampled using proprietary techniques.
 
-**Update (2020-04-20)**: the surprise langauges are now announced. They are:
+## Format
 
-1.  Adyghe (`ady`)
-2.  Dutch (`dut`)
-3.  Japanese hiragana (`jpn`)
-4.  Romanian (`rum`)
-5.  Vietnamese (`vie`)
+Training and development data are UTF-8-encoded tab-separated values files. Each
+example occupies a single line and consists of a grapheme sequence&mdash;a sequence
+of [NFC](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms) Unicode
+codepoints&mdash;a tab character, and the corresponding phone sequence, a
+roughly-phonemic IPA, tokenized using the
+[`segments`](https://github.com/cldf/segments) library. The following shows
+three lines of Romanian data:
 
-Baseline results
-================
+    antonim a n t o n i m
+    ploaie  p lʷ a j e
+    pornește    p o r n e ʃ t e
 
-Results for the three baselines will be made available
-[here](https://docs.google.com/spreadsheets/d/1g0HyGeVzFrNt2pvNuu8L1voFFQY-0CwjTxGA3VXXNGI/edit?usp=sharing)
-as they become available.
+## Languages
 
-Using the baselines
-===================
+SIGMORPHON 2021 Task 1 medium-resource data consists of 10,000 words from the following ten languages. The data is randomly split into training (80%), development (10%), and testing (10%) data.
 
-[`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html)
-is recommended for a reproducible environment. Once you have conda installed,
-create a new conda environment by running this:
+1.  `arm_e`: Armenian (Eastern dialect)
+2.  `bul`: Bulgarian
+3.  `dut`: Dutch
+4.  `fre`: French
+5.  `geo`: Georgian
+6.  `hbs_latn`: Serbo-Croatian (Latin script)
+7.  `hun`: Hungarian
+8.  `jpn_hira`: Japanese (Hiragana script)
+9.  `kor`: Korean
+10. `vie_hanoi`: Vietnamese (Hanoi dialect)
 
-``` {.bash}
-conda env create -f environment.yml
-```
+## Evaluation
 
-The new environment is called "task1". Activate it by running this:
+The metric used to rank systems is *word error rate* (WER), the percentage of
+words for which the hypothesized transcription sequence does not match the gold
+transcription. This value, in accordance with common practice, is a decimal
+value multiplied by 100 (e.g.: 13.53). In the medium- and low-frequency tasks,
+WER is macro-averaged across all ten languages. We provide two Python scripts
+for evaluation:
 
-``` {.bash}
-conda activate task1
-```
+-   [`evaluate.py`](evaluation/evaluate.py) computes the WER for one language.
+-   [`evaluate_all.py`](evaluation/evaluate_all.py) computes per-language and average WER across multiple languages.
