@@ -24,14 +24,10 @@
 \usepackage{microtype}
 
 % custom
-% \usepackage{fontspec}
-% \setmainfont{Charis SIL}
-% \usepackage{xeCJK}
-% \setCJKmainfont{Noto Serif CJK KR}
-% \usepackage[georgian]{babel}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{ {../images/} }
+\usepackage{subfig}
 
 \aclfinalcopy % Uncomment this line for the final submission
 %\def\aclpaperid{***} %  Enter the acl Paper ID here
@@ -54,13 +50,14 @@
 
 \begin{document}
 \maketitle
-\begin{abstract}
 
+\begin{abstract}
+Writing systems in the world vary from highly regular ones to highly irregular ones. The orthographic depth of a language indicates how much it deviates from on-to-one letter to sound correspondence. In this work, we estimate the depth of 10 languages, based on the SIGMORPHON 2021 medium-resource data. For each language, we train a transformer model in grapheme-to-phoneme and phoneme-to-grapheme tasks. The scores in each task can be used to estimate the transparency of languages regarding reading and writing.
 \end{abstract}
 
 \section{Introduction}
 
-The orthographic depth of an alphabetic orthography indicates the degree to which a written language deviates from simple one-to-one grapheme (letter) to phoneme (sound) correspondence. 
+The orthographic depth of an orthography indicates the degree to which a written language deviates from simple one-to-one grapheme (letter) to phoneme (sound) correspondence. 
 
 Shallow (transparent) orthographies, also called phonemic orthographies, have a one-to-one relationship between its graphemes and phonemes, and the writing and reading of letters is very consistent. Spanish and Basque are examples of transparent orthographies.
 
@@ -77,13 +74,9 @@ sequence of words into another sequence of words. Our model only requires transl
 
 Sequence-to-sequence (seq2seq) models have been proven to be very successful on language translation tasks. Recently, attention \cite{bahdanau2016neural}, transformers \cite{vaswani2017attention} and generative pre-training (GPT) \cite{Radford2018ImprovingLU} have improved the performance of seq2seq models. Applying the transformer to character-level transduction tasks such as G2P has been proved to be a good option \cite{wu2021applying}. It was one of the baselines in the SIGMORPHON 2020 G2P task \cite{gorman-etal-2020-sigmorphon}.
 
-Many studies have discussed the transparency of orthographies based on the ease of reading and writing when learning a new language \cite{borleffs2017measuring}. However, there is not much work in NLP about measuring the level of transparency of an orthography. In an old work, three data-based algorithms were tested on three orthographies: Dutch, English and French \cite{bosch-1994-depth}.
+Many studies have discussed the transparency of orthographies based on the ease of reading and writing when learning a new language \cite{borleffs2017measuring}. However, there is not much work that use some of the preciously mentioned models to measure the level of transparency of orthographies.
 
-In a recent work, a minimalist GPT implementation has been used to compare 17 orthographies \cite{marjou2021oteann} on the same G2P and P2G tasks. A unique multi-orthography model was trained to learn the writing and reading tasks on all languages at the same time. In other words, a single dataset containing samples of all studied orthographies was used.
-
-On the one hand, the results show that Chinese, French, English and Russian are the most opaque regarding writing. English and Dutch are the most opaque regarding reading. 
-
-On the other hand, they indicate that Esperanto, Arabic, Finnish, Korean, Serbo-Croatian and Turkish are very shallow both to read and to write. Italian, Breton, German, Portuguese and Spanish are shallow to read and to write.
+In a recent work, a minimalist GPT implementation was used to compare 17 orthographies \cite{marjou2021oteann} on the same G2P and P2G tasks. A unique multi-orthography model was trained to learn the writing and reading tasks on all languages at the same time. In other words, a single dataset containing samples of all studied orthographies was used.
 
 \section{Material and methods}
 
@@ -129,43 +122,33 @@ A minimum of 5 occurrences is set for each character, and the remaining ones are
 \label{tab:counts}
 \end{table*}
 
-For example, on the one hand, Georgian has the same amount of unique and average graphemes and phonemes. The frequency distribution of graphemes and phonemes in Georgian is the same, as it can be seen in Figures \ref{fig:geo_graphemes} and \ref{fig:geo_phonemes}. On the other hand, Korean is a crear outlier if we look at grapheme counts. There are many unique graphemes, but the mean grapheme count of each words is very low. This means that each grapheme is matched to multiple phonemes.
+For example, on the one hand, Georgian has the same amount of unique and average graphemes and phonemes. The frequency distribution of graphemes and phonemes in Georgian is the same, as it can be seen in Figure \ref{fig:geo_graphemes_phonemes}. On the other hand, Korean is a crear outlier if we look at grapheme counts. There are many unique graphemes, but the mean grapheme count of each words is very low. This means that each grapheme is matched to multiple phonemes.
 
-\begin{figure}[ht]
+\begin{figure*}
     \centering
-    \includegraphics[width=\linewidth]{geo_graphemes.png}
-    \caption{Frequency distribution of Georgian graphemes.}
-    \label{fig:geo_graphemes}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=\linewidth]{geo_phonemes.png}
-    \caption{Frequency distribution of Georgian phonemes.}
-    \label{fig:geo_phonemes}
-\end{figure}
+    \subfloat{\includegraphics[width=0.49\linewidth]{geo_graphemes.png}}
+    \subfloat{\includegraphics[width=0.49\linewidth]{geo_phonemes.png}}
+    \caption{Frequency distribution of Georgian graphemes and phonemes.}
+    \label{fig:geo_graphemes_phonemes}
+\end{figure*}
 
 \subsection{Training}
 
 We used fairseq to define the parameters of the model and train it. The parameters of the transformer are the ones defined in \citet{wu2021applying} with a few changes. This transformer is smaller than usual because our character-level dataset is small. It has 4 encoder-decoder layers and 4 self-attention heads. The embedding size is 256 and the hidden size of the feed-forward layer is 1024. The resulting models have around 7.4M parameters.
 
-ReLU was used as an activation function for the feed-forward layers. We use Adam optimizer with a learning rate of 0.001 and an inverse square root learning rate scheduler. We used a batch size of 400 and a the droput rate is set to 0.1. Label smoothing of 0.1 is also applied. Early stopping with a patience of 20 epochs was used to reduce training time and avoid overfiting. Only best and last model checkpoints are saved.
+ReLU was used as an activation function for the feed-forward layers. We use Adam optimizer with a learning rate of 0.001 and an inverse square root learning rate scheduler. We used a batch size of 400 and a the droput rate is set to 0.1. Label smoothing of 0.1 is also applied. Early stopping with a patience of 20 epochs was used to reduce training time and avoid overfiting. Only best and last model checkpoints are saved, and best model is used for evaluation.
 
-The training was done using the free GPUs offered by Google Colab. Each task was trained on a separate day with different GPUs. On the one hand, a Tesla K80 GPU was used for the G2P task, resulting in training times of around 10 minutes for each model. On the other hand, the P2G models were trained using a Tesla T4 GPU, reducing training times to around 5 minutes. The training process was monitored using TensorBoard and can be consulted in TensorBoard.dev\footnote{\url{https://tensorboard.dev/experiment/mcrHkdndR0ySobcxV1UxVA}}. Learning curves of all the models can also be seen in Figures \ref{fig:g2p_loss} and \ref{fig:p2g_loss}
+The training was done using the free GPUs offered by Google Colab. Each task was trained on a separate day with different GPUs. On the one hand, a Tesla K80 GPU was used for the G2P task, resulting in training times of around 10 minutes for each model. On the other hand, the P2G models were trained using a Tesla T4 GPU, reducing training times to around 5 minutes. 
 
-\begin{figure}[ht]
+The training process was monitored using TensorBoard and can be consulted in TensorBoard.dev\footnote{\url{https://tensorboard.dev/experiment/mcrHkdndR0ySobcxV1UxVA}}. Learning curves of all the models can also be seen in Figure \ref{fig:g2p_p2g_loss}. The biggest improvement in loss happens in the first 500 steps. From there, the improvement in loss is small and there is a point where validation loss starts increasing. That is why early stopping makes sense in this case.
+
+\begin{figure*}
     \centering
-    \includegraphics[width=\linewidth]{g2p_loss.png}
-    \caption{G2P validation loss learning curve.}
-    \label{fig:g2p_loss}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=\linewidth]{p2g_loss.png}
-    \caption{P2G validation loss learning curve.}
-    \label{fig:p2g_loss}
-\end{figure}
+    \subfloat{\includegraphics[width=0.49\linewidth]{g2p_loss.png}}
+    \subfloat{\includegraphics[width=0.49\linewidth]{p2g_loss.png}}
+    \caption{G2P and P2G validation loss learning curves for each language.}
+    \label{fig:g2p_p2g_loss}
+\end{figure*}
 
 \subsection{Evaluation}
 
@@ -174,6 +157,8 @@ Fairseq is used to make predictions using the checkpoint of the best models. Bea
 The metric used to rank systems is word error rate (WER), the percentage of words for which the predicted sequence does not match the gold sequence. The average WER was also calculated for each task. This is the same metric that was used in SIGMORPHON 2021 Task 1.
 
 \section{Results}
+
+First, we will compare the G2P results with the SIGMORPHON 2021 baseline. This is important to know if our model is good enough. Then, we will compare all languages taking into account all the results. We will try to rank and group languages based on the results.
 
 \subsection{Comparison with baseline}
 
@@ -214,7 +199,7 @@ The G2P results are compared with the baseline results on the dev and test sets 
 
 \subsection{Comparison between languages}
 
-Results for each task, language and subset are shown in Table \ref{tab:results}. The results for each task can be seen in Figures \ref{fig:g2p_results} and \ref{fig:p2g_results}.
+Results for each task, language and subset are shown in Table \ref{tab:results}. The results for each task can be seen in Figure \ref{fig:g2p_p2g_results}. We will try to rank and group languages based on the results.
 
 \begin{table*}[ht]
 \centering
@@ -240,19 +225,13 @@ Results for each task, language and subset are shown in Table \ref{tab:results}.
 \label{tab:results}
 \end{table*}
 
-\begin{figure}[ht]
+\begin{figure*}
     \centering
-    \includegraphics[width=\linewidth]{g2p_results.png}
-    \caption{G2P results for each language and set.}
-    \label{fig:g2p_results}
-\end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=\linewidth]{p2g_results.png}
-    \caption{P2G results for each language and set.}
-    \label{fig:p2g_results}
-\end{figure}
+    \subfloat{\includegraphics[width=0.49\linewidth]{g2p_results.png}}
+    \subfloat{\includegraphics[width=0.49\linewidth]{p2g_results.png}}
+    \caption{G2P and P2G results for each language and subset.}
+    \label{fig:g2p_p2g_results}
+\end{figure*}
 
 As expected, training set results are much better than development and test set results, which are similar. Most of the times the training WER is close to 0, but there are some cases where the model doesn't even get good results in the training set.
 
@@ -276,15 +255,29 @@ First, Georgian gets almost perfect results both in reading and writing, which c
 
 Japanese (Hiragana) and Armenian (Eastern) have similar scores, with a reading score of around 5\% and a writing score that is close to 10\%.
 
-Next is Vietnamese (Hanoi) which has a much better score on writing (6.00) than  on writing (16.30).
+Next is Vietnamese (Hanoi) which has a much better score on writing (6.00) than on writing (16.30).
 
-Dutch and Bulgarian have reading score of around 20 and writing scores of more or less 25.
+Dutch and Bulgarian have reading score of around 20 and writing scores of more or less 25. Korean also gets bad results both in reading (30.20) and on writing (22.10).
 
-Korean gets bad results both in reading (30.20) and on writing (22.10).
-´
 Finally, we can see that Serbo-Croatian and French are outliers. On the one hand, Serbo-Croatian gets very good score in writing (0.60) and very bad (47.7) in reading. On the other hand, French reading score is very bad (54.00), but writing score is better than average (10.20).
 
-\section{Conclusion}
+We can also compare these results with the ones obtained in \citet{marjou2021oteann}. On the one hand, their results show that Chinese, French, English and Russian are the most opaque regarding writing. English and Dutch are the most opaque regarding reading. On the other hand, they indicate that Esperanto, Arabic, Finnish, Korean, Serbo-Croatian and Turkish are very shallow both to read and to write. Italian, Breton, German, Portuguese and Spanish are shallow to read and to write.
+
+If we take a look at the common languages, we realise that not all results match. French results are similar, with a good reading score and very bad writing score. Dutch scores are the other way around, we get a better reading score. Korean scores are worse in both tasks and Serbo-Croatian gets much worse results in the reading task.
+
+These differences could be mainly attributed to the differences in the data used. In fact, some inconsistencies in the data have been previously reported. Using a single model instead of a unique model for each language and task could also have an impact.
+
+\section{Conclusions}
+
+As we mentioned previously, a recent work approached the same problem using a single model for both tasks in 17 languages \cite{marjou2021oteann}. This time, we decide to use the opposite approach, training a different model for each task and language. 
+
+Nonetheless, most of the results obtained are similar in both cases. Moreover, both results resemble the ones obtained in other studies. This suggests that these types of models can estimate the orthographic depth of languages quite accurately.
+
+However, it is necessary to fix the inconsistencies in the entries of some languages to have more accurate results. These inconsistencies have a big impact in the results of some languages. For example, Georgian WER score improved from 24.89 in SIGMORPHON 2020 \cite{gorman-etal-2020-sigmorphon} to 0 in 2021. Therefore, quality assurance work such as the one done in SIGMORPHON 2021 is very important \cite{ashby-etal-2021-results}.
+
+Moreover, as these inconsistencies usually cause errors in the predictions, these models could also be used to detect inconsistencies. For example, languages with transparent orthographies such as Georgian are expected to get very good results. If we get bad results and look at the errors, we might find the inconsistencies that are causing them. Then we could fix them to improve the quality of the data and get better results.
+
+These methods could be applied to many other languages to make a broader classification of languages. There are many more languages in Wiktionary that have at least 10,000 entries. In fact, we can find many languages with more than 100,000 words, and very few with more than 1,000,000. However, there is a limitation in the available data for smaller languages. There are languages many that have less than 10,000 entries, and others with less than 1,000.
 
 \bibliography{writing_systems}
 \bibliographystyle{acl_natbib}
